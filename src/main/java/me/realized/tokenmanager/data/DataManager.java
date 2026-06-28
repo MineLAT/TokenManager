@@ -161,8 +161,8 @@ public class DataManager implements Loadable, Listener {
         }
 
         final Player player = event.getPlayer();
-        queuedCommands.asMap().remove(player.getUniqueId());
         database.save(player);
+        queuedCommands.asMap().remove(player.getUniqueId());
     }
 
     private class QueuedCommand {

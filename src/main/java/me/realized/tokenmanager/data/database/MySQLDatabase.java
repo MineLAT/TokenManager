@@ -18,8 +18,6 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -49,7 +47,6 @@ public class MySQLDatabase extends AbstractDatabase {
 
     private static final String SERVER_MODE_MISMATCH = "Server is in %s mode, but found table '%s' does not have column '%s'! Please choose a different table name.";
     private final String table;
-    private final ExecutorService executor;
     private final Map<UUID, Long> data = new HashMap<>();
 
     private HikariDataSource dataSource;
@@ -62,7 +59,6 @@ public class MySQLDatabase extends AbstractDatabase {
     public MySQLDatabase(final TokenManagerPlugin plugin) {
         super(plugin);
         this.table = StringEscapeUtils.escapeSql(plugin.getConfiguration().getMysqlTable());
-        this.executor = Executors.newCachedThreadPool();
         Query.update(table, online);
     }
 
@@ -204,7 +200,7 @@ public class MySQLDatabase extends AbstractDatabase {
             return;
         }
 
-        executor.execute(() -> {
+        plugin.doAsync(() -> {
             try (Connection connection = dataSource.getConnection()) {
                 update(connection, from(player), balance.getAsLong());
             } catch (Exception ex) {
@@ -215,12 +211,6 @@ public class MySQLDatabase extends AbstractDatabase {
 
     @Override
     public void shutdown() throws Exception {
-        executor.shutdown();
-
-        if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
-            Log.error("Some tasks have failed to execute!");
-        }
-
         try (Connection connection = dataSource.getConnection()) {
             insertCache(connection, data, true);
         } finally {
