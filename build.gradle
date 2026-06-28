@@ -1,16 +1,16 @@
 plugins {
     id 'java'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'com.gradleup.shadow' version '9.4.3'
 }
 
 repositories {
-    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-    maven { url 'https://oss.sonatype.org/content/repositories/central' }
-    maven { url 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
-    maven { url 'https://repo.codemc.io/repository/maven-public/' }
-    maven { url 'https://repo.inventivetalent.org/content/groups/public/' }
     mavenCentral()
+    maven { url = uri('https://hub.spigotmc.org/nexus/content/repositories/snapshots/') }
+    maven { url = uri('https://oss.sonatype.org/content/repositories/snapshots') }
+    maven { url = uri('https://oss.sonatype.org/content/repositories/central') }
+    maven { url = uri('https://repo.extendedclip.com/content/repositories/placeholderapi/') }
+    maven { url = uri('https://repo.codemc.io/repository/maven-public/') }
+    maven { url = uri('https://repo.inventivetalent.org/content/groups/public/') }
 }
 
 processResources {
@@ -43,8 +43,7 @@ compileJava {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    toolchain.languageVersion.set(JavaLanguageVersion.of(8))
 }
 
 jar {
@@ -54,10 +53,12 @@ jar {
 
 shadowJar {
     archiveClassifier.set('')
+
     relocate 'redis.clients.jedis', project.group + '.shaded.jedis'
     relocate 'org.apache.commons.pool2', project.group + '.shaded.commons.pool2'
     relocate 'com.zaxxer.hikari', project.group + '.shaded.hikari'
     relocate 'org.slf4j', project.group + ".shaded.slf4j"
     relocate 'org.bstats', project.group + '.shaded.bstats'
+
     minimize()
 }
