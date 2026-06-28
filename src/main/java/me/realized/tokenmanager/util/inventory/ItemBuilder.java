@@ -12,7 +12,7 @@ public final class ItemBuilder {
     private final ItemStack result;
 
     private ItemBuilder(final Material type, final int amount, final short durability) {
-        this.result = new ItemStack(type, amount, durability);
+        this.result = new ItemStack(type != null ? type : Material.STONE, amount, durability);
     }
 
     public static ItemBuilder of(final Material type) {
