@@ -26,8 +26,7 @@ public class TokenCommand extends BaseCommand {
             new ShopCommand(plugin),
             new ShopsCommand(plugin),
             new SellCommand(plugin),
-            new WorthCommand(plugin),
-            new VersionCommand(plugin)
+            new WorthCommand(plugin)
         );
     }
 
