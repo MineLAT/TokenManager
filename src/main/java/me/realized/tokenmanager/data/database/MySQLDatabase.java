@@ -29,7 +29,6 @@ import me.realized.tokenmanager.util.Log;
 import me.realized.tokenmanager.util.NumberUtil;
 import me.realized.tokenmanager.util.compat.CompatUtil;
 import me.realized.tokenmanager.util.profile.ProfileUtil;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -37,10 +36,9 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.DefaultJedisClientConfig;
 import redis.clients.jedis.JedisPubSub;
+import redis.clients.jedis.RedisClient;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 public class MySQLDatabase extends AbstractDatabase {
@@ -52,13 +50,13 @@ public class MySQLDatabase extends AbstractDatabase {
     private HikariDataSource dataSource;
 
     @Getter
-    private JedisPool jedisPool;
+    private RedisClient client;
     private JedisListener listener;
     private transient boolean usingRedis;
 
     public MySQLDatabase(final TokenManagerPlugin plugin) {
         super(plugin);
-        this.table = StringEscapeUtils.escapeSql(plugin.getConfiguration().getMysqlTable());
+        this.table = plugin.getConfiguration().getMysqlTable().replace("'", "''");
         Query.update(table, online);
     }
 
@@ -81,16 +79,31 @@ public class MySQLDatabase extends AbstractDatabase {
             final String password = config.getRedisPassword();
 
             if (password.isEmpty()) {
-                this.jedisPool = new JedisPool(new JedisPoolConfig(), config.getRedisServer(), config.getRedisPort(), 0);
+                this.client = RedisClient.builder()
+                        .hostAndPort(config.getRedisServer(), config.getRedisPort())
+                        .clientConfig(
+                                DefaultJedisClientConfig.builder()
+                                        .timeoutMillis(0)
+                                        .build()
+                        )
+                        .build();
             } else {
-                this.jedisPool = new JedisPool(new JedisPoolConfig(), config.getRedisServer(), config.getRedisPort(), 0, password);
+                this.client = RedisClient.builder()
+                        .hostAndPort(config.getRedisServer(), config.getRedisPort())
+                        .clientConfig(
+                                DefaultJedisClientConfig.builder()
+                                        .password(password)
+                                        .timeoutMillis(0)
+                                        .build()
+                        )
+                        .build();
             }
 
             plugin.doAsync(() -> {
                 usingRedis = true;
 
-                try (Jedis jedis = jedisPool.getResource()) {
-                    jedis.subscribe(listener = new JedisListener(), "tokenmanager");
+                try {
+                    this.client.subscribe(listener = new JedisListener(), "tokenmanager");
                 } catch (Exception ex) {
                     usingRedis = false;
                     Log.error("Failed to connect to the redis server! Player balance synchronization issues may occur when modifying them while offline.");
@@ -214,7 +227,7 @@ public class MySQLDatabase extends AbstractDatabase {
         try (Connection connection = dataSource.getConnection()) {
             insertCache(connection, data, true);
         } finally {
-            for (final AutoCloseable closeable : Arrays.asList(dataSource, listener, jedisPool)) {
+            for (final AutoCloseable closeable : Arrays.asList(dataSource, listener, this.client)) {
                 if (closeable != null) {
                     try {
                         closeable.close();
@@ -411,8 +424,8 @@ public class MySQLDatabase extends AbstractDatabase {
     }
 
     private void publish(final String message) {
-        try (Jedis jedis = jedisPool.getResource()) {
-            jedis.publish("tokenmanager", message);
+        try {
+            this.client.publish("tokenmanager", message);
         } catch (JedisConnectionException ignored) {}
     }
 

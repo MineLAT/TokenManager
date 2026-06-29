@@ -13,7 +13,6 @@ import me.realized.tokenmanager.util.Reloadable;
 import me.realized.tokenmanager.util.StringUtil;
 import me.realized.tokenmanager.util.config.AbstractConfiguration;
 import me.realized.tokenmanager.util.config.convert.Converter;
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -66,7 +65,7 @@ public class Lang extends AbstractConfiguration<TokenManagerPlugin> implements R
             for (final Map.Entry<String, String> entry : strings.entrySet()) {
                 final String placeholder = "{" + entry.getKey() + "}";
 
-                if (StringUtils.containsIgnoreCase(value, placeholder)) {
+                if (value.toLowerCase().contains(placeholder.toLowerCase())) {
                     value = value.replaceAll("(?i)" + Pattern.quote(placeholder), entry.getValue());
                 }
             }

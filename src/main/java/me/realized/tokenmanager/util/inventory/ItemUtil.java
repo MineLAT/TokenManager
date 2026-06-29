@@ -1,11 +1,11 @@
 package me.realized.tokenmanager.util.inventory;
 
+import com.cryptomorin.xseries.XEnchantment;
+import com.cryptomorin.xseries.XPotion;
 import com.google.common.collect.Lists;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Consumer;
 import me.realized.tokenmanager.util.EnumUtil;
@@ -32,77 +32,6 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
 
 public final class ItemUtil {
-
-    private static final Map<String, Enchantment> ENCHANTMENTS;
-    private static final Map<String, PotionEffectType> EFFECTS;
-
-    static {
-        final Map<String, Enchantment> enchantments = new HashMap<>();
-        Arrays.stream(Enchantment.values()).forEach(enchantment -> {
-            enchantments.put(enchantment.getName(), enchantment);
-
-            if (!CompatUtil.isPre1_13()) {
-                enchantments.put(enchantment.getKey().getKey(), enchantment);
-            }
-        });
-        enchantments.put("power", Enchantment.ARROW_DAMAGE);
-        enchantments.put("flame", Enchantment.ARROW_FIRE);
-        enchantments.put("infinity", Enchantment.ARROW_INFINITE);
-        enchantments.put("punch", Enchantment.ARROW_KNOCKBACK);
-        enchantments.put("sharpness", Enchantment.DAMAGE_ALL);
-        enchantments.put("baneofarthopods", Enchantment.DAMAGE_ARTHROPODS);
-        enchantments.put("smite", Enchantment.DAMAGE_UNDEAD);
-        enchantments.put("efficiency", Enchantment.DIG_SPEED);
-        enchantments.put("unbreaking", Enchantment.DURABILITY);
-        enchantments.put("thorns", Enchantment.THORNS);
-        enchantments.put("fireaspect", Enchantment.FIRE_ASPECT);
-        enchantments.put("knockback", Enchantment.KNOCKBACK);
-        enchantments.put("fortune", Enchantment.LOOT_BONUS_BLOCKS);
-        enchantments.put("looting", Enchantment.LOOT_BONUS_MOBS);
-        enchantments.put("respiration", Enchantment.OXYGEN);
-        enchantments.put("blastprotection", Enchantment.PROTECTION_EXPLOSIONS);
-        enchantments.put("featherfalling", Enchantment.PROTECTION_FALL);
-        enchantments.put("fireprotection", Enchantment.PROTECTION_FIRE);
-        enchantments.put("projectileprotection", Enchantment.PROTECTION_PROJECTILE);
-        enchantments.put("protection", Enchantment.PROTECTION_ENVIRONMENTAL);
-        enchantments.put("silktouch", Enchantment.SILK_TOUCH);
-        enchantments.put("aquaaffinity", Enchantment.WATER_WORKER);
-        enchantments.put("luck", Enchantment.LUCK);
-        ENCHANTMENTS = Collections.unmodifiableMap(enchantments);
-
-        final Map<String, PotionEffectType> effects = new HashMap<>();
-        Arrays.stream(PotionEffectType.values()).forEach(type -> {
-            if (type == null) {
-                return;
-            }
-
-            effects.put(type.getName(), type);
-        });
-        effects.put("speed", PotionEffectType.SPEED);
-        effects.put("slowness", PotionEffectType.SLOW);
-        effects.put("haste", PotionEffectType.FAST_DIGGING);
-        effects.put("fatigue", PotionEffectType.SLOW_DIGGING);
-        effects.put("strength", PotionEffectType.INCREASE_DAMAGE);
-        effects.put("heal", PotionEffectType.HEAL);
-        effects.put("harm", PotionEffectType.HARM);
-        effects.put("jump", PotionEffectType.JUMP);
-        effects.put("nausea", PotionEffectType.CONFUSION);
-        effects.put("regeneration", PotionEffectType.REGENERATION);
-        effects.put("resistance", PotionEffectType.DAMAGE_RESISTANCE);
-        effects.put("fireresistance", PotionEffectType.FIRE_RESISTANCE);
-        effects.put("waterbreathing", PotionEffectType.WATER_BREATHING);
-        effects.put("invisibility", PotionEffectType.INVISIBILITY);
-        effects.put("blindness", PotionEffectType.BLINDNESS);
-        effects.put("nightvision", PotionEffectType.NIGHT_VISION);
-        effects.put("hunger", PotionEffectType.HUNGER);
-        effects.put("weakness", PotionEffectType.WEAKNESS);
-        effects.put("poison", PotionEffectType.POISON);
-        effects.put("wither", PotionEffectType.WITHER);
-        effects.put("healthboost", PotionEffectType.HEALTH_BOOST);
-        effects.put("absorption", PotionEffectType.ABSORPTION);
-        effects.put("saturation", PotionEffectType.SATURATION);
-        EFFECTS = Collections.unmodifiableMap(effects);
-    }
 
     public static ItemStack loadFromString(final String line) {
         if (line == null || line.isEmpty()) {
@@ -224,9 +153,7 @@ public final class ItemUtil {
         }
 
         if (key.equalsIgnoreCase("unbreakable") && value.equalsIgnoreCase("true")) {
-            if (CompatUtil.isPre1_12()) {
-                meta.spigot().setUnbreakable(true);
-            } else {
+            if (!CompatUtil.isPre1_12()) {
                 meta.setUnbreakable(true);
             }
 
@@ -251,20 +178,20 @@ public final class ItemUtil {
             return;
         }
 
-        final Enchantment enchantment = ENCHANTMENTS.get(key);
+        final Optional<Enchantment> enchantment = XEnchantment.of(key).map(XEnchantment::get);
 
-        if (enchantment != null) {
-            item.addUnsafeEnchantment(enchantment, Integer.parseInt(value));
+        if (enchantment.isPresent()) {
+            item.addUnsafeEnchantment(enchantment.get(), Integer.parseInt(value));
             return;
         }
 
         if (item.getType().name().contains("POTION")) {
-            final PotionEffectType effectType = EFFECTS.get(key);
+            final Optional<PotionEffectType> effectType = XPotion.of(key).map(XPotion::get);
 
-            if (effectType != null) {
+            if (effectType.isPresent()) {
                 final String[] values = value.split(":");
                 final PotionMeta potionMeta = (PotionMeta) meta;
-                potionMeta.addCustomEffect(new PotionEffect(effectType, Integer.parseInt(values[1]), Integer.parseInt(values[0])), true);
+                potionMeta.addCustomEffect(new PotionEffect(effectType.get(), Integer.parseInt(values[1]), Integer.parseInt(values[0])), true);
                 item.setItemMeta(potionMeta);
                 return;
             }

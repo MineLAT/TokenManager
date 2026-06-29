@@ -22,7 +22,6 @@ import me.realized.tokenmanager.config.Config;
 import me.realized.tokenmanager.util.Log;
 import me.realized.tokenmanager.util.compat.CompatUtil;
 import me.realized.tokenmanager.util.profile.ProfileUtil;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -186,7 +185,7 @@ public class FileDatabase extends AbstractDatabase {
     public void transfer(final CommandSender sender, final Consumer<String> errorHandler) {
         final Config config = plugin.getConfiguration();
         final String query = String
-            .format("SELECT %s, tokens FROM %s;", online ? "uuid" : "name", StringEscapeUtils.escapeSql(plugin.getConfiguration().getMysqlTable()));
+            .format("SELECT %s, tokens FROM %s;", online ? "uuid" : "name", plugin.getConfiguration().getMysqlTable().replace("'", "''"));
         final HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl("jdbc:mysql://" + config.getMysqlHostname() + ":" + config.getMysqlPort() + "/" + config.getMysqlDatabase());
         hikariConfig.setDriverClassName("com.mysql." + (CompatUtil.isPre1_17() ? "jdbc" : "cj") + ".Driver");

@@ -83,4 +83,20 @@ public final class StringUtil {
 
         return sb.toString();
     }
+
+    public static String capitalize(String str) {
+        boolean cap = true;
+        final StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < str.length(); i++) {
+            final char c = str.charAt(i);
+            if (cap && Character.isLetter(c)) {
+                builder.append(Character.toUpperCase(c));
+                cap = false;
+            } else {
+                cap = Character.isWhitespace(c);
+                builder.append(c);
+            }
+        }
+        return builder.toString();
+    }
 }

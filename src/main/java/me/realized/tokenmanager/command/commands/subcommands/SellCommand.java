@@ -6,7 +6,7 @@ import me.realized.tokenmanager.TokenManagerPlugin;
 import me.realized.tokenmanager.api.event.TMSellAllEvent;
 import me.realized.tokenmanager.api.event.TMSellHandEvent;
 import me.realized.tokenmanager.command.BaseCommand;
-import org.apache.commons.lang.WordUtils;
+import me.realized.tokenmanager.util.StringUtil;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -99,7 +99,7 @@ public class SellCommand extends BaseCommand {
         player.getInventory().setItem(heldSlot, null);
         dataManager.set(player, dataManager.get(player).orElse(0) + price);
 
-        final String name = WordUtils.capitalizeFully(item.getType().toString().replace("_", " ").toLowerCase());
+        final String name = StringUtil.capitalize(item.getType().toString().replace("_", " ").toLowerCase());
         sendMessage(sender, true, "COMMAND.token.sell", "item_type", name, "item_amount", item.getAmount(), "amount", price);
     }
 }

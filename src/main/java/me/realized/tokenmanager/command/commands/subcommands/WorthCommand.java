@@ -4,7 +4,7 @@ import java.util.OptionalLong;
 import me.realized.tokenmanager.Permissions;
 import me.realized.tokenmanager.TokenManagerPlugin;
 import me.realized.tokenmanager.command.BaseCommand;
-import org.apache.commons.lang.WordUtils;
+import me.realized.tokenmanager.util.StringUtil;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -43,7 +43,7 @@ public class WorthCommand extends BaseCommand {
                     price += worth.getAsLong();
                     total += item.getAmount();
 
-                    final String name = WordUtils.capitalizeFully(item.getType().toString().replace("_", " ").toLowerCase());
+                    final String name = StringUtil.capitalize(item.getType().toString().replace("_", " ").toLowerCase());
                     sendMessage(sender, true, "COMMAND.token.worth-all.item-format", "item_type", name, "item_amount", item.getAmount(), "amount", price);
                 }
             }
@@ -67,7 +67,7 @@ public class WorthCommand extends BaseCommand {
         }
 
         final long price = worth.getAsLong();
-        final String name = WordUtils.capitalizeFully(item.getType().toString().replace("_", " ").toLowerCase());
+        final String name = StringUtil.capitalize(item.getType().toString().replace("_", " ").toLowerCase());
         sendMessage(sender, true, "COMMAND.token.worth", "item_type", name, "item_amount", item.getAmount(), "amount", price);
     }
 }
